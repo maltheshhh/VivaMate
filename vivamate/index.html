@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VivaMate</title>
+<style>
+:root{--bg:#eef0ff;--sf:rgba(255,255,255,.8);--tx:#1B1F4B;--mut:#5b6190;--ac:#5EE3C2;--wk:#FF6B6B;--bd:rgba(27,31,75,.12);--r:18px}
+[data-theme=dark]{--bg:#1B1F4B;--sf:rgba(255,255,255,.07);--tx:#fff;--mut:#aab0e0;--bd:rgba(255,255,255,.14)}
+*{box-sizing:border-box}
+body{margin:0;height:100vh;display:flex;flex-direction:column;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button,input,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--ac);outline-offset:2px}
+header{display:flex;align-items:center;gap:12px;padding:14px 24px}
+h1{font-size:1.9rem;letter-spacing:-.03em;margin:0;flex:1}h1 b{color:var(--ac)}
+h2{font-size:1.15rem;margin:0 0 12px;letter-spacing:-.01em}
+.card{background:var(--sf);border:1px solid var(--bd);backdrop-filter:blur(14px);border-radius:var(--r);padding:20px}
+.pill,.chip{border:1px solid var(--bd);background:var(--sf);border-radius:999px;padding:6px 14px;cursor:pointer;font-size:.9rem}
+.chip.on,.pri{background:var(--ac);color:#1B1F4B;border-color:var(--ac);font-weight:600}
+.pri{border:0;border-radius:12px;padding:10px 18px;cursor:pointer}
+#badge{font-size:.85rem;padding:6px 14px;border-radius:999px;background:var(--ac);color:#1B1F4B;font-weight:600}
+#badge.off{background:var(--wk)}
+main{flex:1;min-height:0;display:grid;grid-template-columns:260px 1fr 320px;gap:20px;padding:0 24px 24px}
+main>*{min-height:0;overflow:auto}
+aside{display:flex;flex-direction:column;gap:12px}
+#side .chip{display:block;width:100%;text-align:left;border-radius:14px;margin-bottom:8px}
+#chat{display:flex;flex-direction:column;padding:0}
+#log{flex:1;overflow:auto;padding:24px;display:flex;flex-direction:column;gap:14px}
+.msg{max-width:82%;display:flex;flex-direction:column;gap:4px}.msg.user{align-self:flex-end}
+.b{padding:12px 16px;border-radius:var(--r);white-space:pre-wrap;background:var(--sf);border:1px solid var(--bd)}
+.user .b{background:var(--ac);color:#1B1F4B;border:0}
+.act{display:flex;gap:8px;font-size:.8rem}.act button{background:none;border:0;color:var(--mut);cursor:pointer;padding:0}
+.typing i{display:inline-block;width:8px;height:8px;margin-right:4px;border-radius:50%;background:var(--mut);animation:d 1s infinite}
+.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes d{50%{transform:translateY(-4px);opacity:.4}}
+#empty{padding:0 24px;display:flex;flex-wrap:wrap;gap:10px}
+form{display:flex;gap:10px;align-items:flex-end;padding:16px;border-top:1px solid var(--bd)}
+textarea{flex:1;resize:none;border:1px solid var(--bd);background:transparent;border-radius:14px;padding:10px 14px;max-height:120px}
+#mic{width:44px;height:44px;border-radius:50%;border:0;background:var(--ac);color:#1B1F4B;cursor:pointer;font-size:1.1rem}
+#mic.rec{background:var(--wk);animation:p 1s infinite}
+@keyframes p{50%{box-shadow:0 0 0 10px rgba(255,107,107,.3)}}
+#wave{width:90px;height:36px;display:none}
+#timer{align-self:center;font-weight:700;color:var(--wk)}
+svg.g{width:170px;display:block;margin:0 auto}
+.track{fill:none;stroke:var(--bd);stroke-width:10}
+#arc{fill:none;stroke:var(--ac);stroke-width:10;stroke-linecap:round;stroke-dasharray:326.7;stroke-dashoffset:326.7;transform:rotate(-90deg);transform-origin:60px 60px;transition:stroke-dashoffset 1.2s ease}
+#sc{font-size:2rem;font-weight:800;fill:var(--tx);text-anchor:middle}
+.bar{margin:8px 0;font-size:.85rem}.bar div{height:8px;border-radius:8px;background:var(--bd);overflow:hidden}.bar i{display:block;height:100%;background:var(--wk)}
+.bar.ok i{background:var(--ac)}
+dialog{border:1px solid var(--bd);border-radius:var(--r);background:var(--bg);color:var(--tx);padding:24px;width:min(420px,92vw)}
+dialog input:not([type=radio]){display:block;width:100%;margin:6px 0 14px;padding:10px;border-radius:10px;border:1px solid var(--bd);background:transparent}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:8px 18px;border-radius:999px;display:none}
+.tabs{display:none}
+@media(max-width:900px){
+ main{grid-template-columns:1fr;padding:0 12px 12px}
+ body[data-tab=side] main>:not(#side),body[data-tab=chat] main>:not(#chat),body[data-tab=ins] main>:not(#ins){display:none}
+ .tabs{display:flex;gap:8px;padding:0 12px 12px}.tabs button{flex:1}
+ .msg{max-width:95%}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style></head>
+<body data-tab="chat">
+<header><h1>Viva<b>Mate</b></h1><span id="badge">Online</span>
+<button class="pill" id="setupB">Setup</button><button class="pill" id="setB">Settings</button><button class="pill" id="themeB" aria-label="Toggle theme">◐</button></header>
+<main>
+<aside id="side" class="card"><h2>Modes</h2><div id="modes"></div>
+<button class="chip" id="press" aria-pressed="false">⏱ Pressure mode</button>
+<button class="chip" id="voice" aria-pressed="true">🔊 Read replies aloud</button>
+<h2 style="margin-top:16px">Streak</h2><div id="streak" class="pill" style="display:inline-block">0 days</div></aside>
+<section id="chat" class="card"><div id="log" aria-live="polite"></div>
+<div id="empty"></div>
+<form id="f"><button type="button" id="mic" aria-label="Tap to talk">🎙</button><canvas id="wave" width="90" height="36"></canvas>
+<textarea id="in" rows="1" placeholder="Answer, or try /quiz /weak /resume-tips /hr /report" aria-label="Message"></textarea>
+<span id="timer"></span><button class="pri">Send</button></form></section>
+<aside id="ins"><div class="card"><h2>Readiness</h2>
+<svg class="g" viewBox="0 0 120 120"><circle class="track" cx="60" cy="60" r="52"/><circle id="arc" cx="60" cy="60" r="52"/><text id="sc" x="60" y="70">0</text></svg></div>
+<div class="card"><h2>Weak spots</h2><div id="bars"><span style="color:var(--mut)">Answer a few questions first.</span></div></div>
+<div class="card"><h2>Badges</h2><div id="badges" style="color:var(--mut)">None yet</div>
+<p><button class="pri" id="shareB">Result card</button> <a class="pill" href="/api/export" style="text-decoration:none;color:inherit">PDF report</a></p></div></aside>
+</main>
+<nav class="tabs"><button class="chip" data-t="side">Modes</button><button class="chip" data-t="chat">Chat</button><button class="chip" data-t="ins">Insights</button></nav>
+<dialog id="setup"><form method="dialog" id="pf" style="display:block;border:0;padding:0"><h2>Setup</h2>
+<label>Name<input name="name" required></label><label>Target role<input name="role" placeholder="Software Engineer"></label>
+<label>GitHub username<input name="github"></label><label>Resume (PDF)<input name="resume" type="file" accept=".pdf"></label>
+<button class="pri">Save</button></form></dialog>
+<dialog id="set"><h2>Model</h2><label><input type="radio" name="m" value="local"> Local (Ollama)</label><br>
+<label><input type="radio" name="m" value="cloud" id="cl"> Cloud (from .env)</label><p><button class="pri" id="setX">Close</button></p></dialog>
+<div id="toast" role="status"></div>
+<script>
+const $=s=>document.querySelector(s),sid=Math.random().toString(36).slice(2);
+const MODES={mock:'Mock Interview',explain:'Explain Mode',hr:'HR Round',dsa:'DSA Round',project:'Project Deep-Dive'};
+let mode='mock',busy=false,voice=true,pressure=false,timer,last={};
+const toast=t=>{const e=$('#toast');e.textContent=t;e.style.display='block';setTimeout(()=>e.style.display='none',3000)};
+const speak=t=>{if(!window.speechSynthesis)return;speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t))};
+for(const k in MODES){const b=document.createElement('button');b.className='chip'+(k==='mock'?' on':'');b.textContent=MODES[k];b.onclick=()=>{mode=k;document.querySelectorAll('#modes .chip').forEach(x=>x.classList.toggle('on',x===b))};$('#modes').append(b)}
+['Start a mock interview','/quiz','/resume-tips','/weak'].forEach(t=>{const b=document.createElement('button');b.className='chip';b.textContent=t;b.onclick=()=>send(t);$('#empty').append(b)});
+$('#press').onclick=e=>{pressure=!pressure;e.target.classList.toggle('on',pressure);e.target.setAttribute('aria-pressed',pressure)};
+$('#voice').onclick=e=>{voice=!voice;e.target.classList.toggle('on',voice);e.target.setAttribute('aria-pressed',voice)};$('#voice').classList.add('on');
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>document.body.dataset.tab=b.dataset.t);
+$('#themeB').onclick=()=>{const d=document.documentElement;d.dataset.theme=d.dataset.theme==='dark'?'light':'dark'};
+document.documentElement.dataset.theme=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';
+const net=()=>{const o=navigator.onLine;$('#badge').textContent=o?'Online':'Offline and working';$('#badge').classList.toggle('off',!o)};
+addEventListener('online',net);addEventListener('offline',net);net();
+function add(role,text){const m=document.createElement('div');m.className='msg '+role;const b=document.createElement('div');b.className='b';b.textContent=text;m.append(b);
+ if(role==='bot'){const a=document.createElement('div');a.className='act';a.innerHTML='<button>Copy</button><button>Replay</button>';
+  a.children[0].onclick=()=>navigator.clipboard.writeText(b.textContent);a.children[1].onclick=()=>speak(b.textContent);m.append(a)}
+ $('#log').append(m);$('#log').scrollTop=1e9;return b}
+async function send(text){
+ text=text.trim();if(!text||busy)return;busy=true;clearInterval(timer);$('#timer').textContent='';$('#empty').hidden=true;
+ add('user',text);const b=add('bot','');b.classList.add('typing');b.innerHTML='<i></i><i></i><i></i>';let out='';
+ try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({session:sid,mode,message:text,pressure})});
+  const rd=r.body.getReader(),dec=new TextDecoder();let buf='';
+  for(;;){const{done,value}=await rd.read();if(done)break;buf+=dec.decode(value,{stream:true});const ps=buf.split('\n\n');buf=ps.pop();
+   for(const p of ps){if(!p.startsWith('data: ')||p.slice(6)==='[DONE]')continue;const j=JSON.parse(p.slice(6));
+    if(j.t){b.classList.remove('typing');out+=j.t;b.textContent=out}
+    if(j.error){b.classList.remove('typing');b.textContent='⚠ '+j.error+'. Is Ollama running?'}
+    if(j.score!==undefined)toast(`Scored ${j.score}/10 · ${j.topic}`)}}
+ }catch(e){b.classList.remove('typing');b.textContent='⚠ Connection failed'}
+ busy=false;if(voice&&out)speak(out);refresh();if(pressure&&out&&mode!=='explain')countdown()}
+function countdown(){let n=60;$('#timer').textContent=n+'s';timer=setInterval(()=>{n--;$('#timer').textContent=n+'s';if(n<=0){clearInterval(timer);send("(Time's up. No answer.)")}},1000)}
+$('#f').onsubmit=e=>{e.preventDefault();const v=$('#in').value;$('#in').value='';send(v)};
+$('#in').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();$('#f').requestSubmit()}};
+let rec,actx,raf;
+$('#mic').onclick=async()=>{
+ if(rec&&rec.state==='recording'){rec.stop();return}
+ try{const st=await navigator.mediaDevices.getUserMedia({audio:true});rec=new MediaRecorder(st);const ch=[];
+  actx=new AudioContext();const an=actx.createAnalyser();an.fftSize=64;actx.createMediaStreamSource(st).connect(an);
+  const cv=$('#wave'),g=cv.getContext('2d'),d=new Uint8Array(32);cv.style.display='block';
+  (function draw(){an.getByteFrequencyData(d);g.clearRect(0,0,90,36);g.fillStyle='#5EE3C2';d.forEach((v,i)=>{const h=v/255*34;g.fillRect(i*3,36-h,2,h)});raf=requestAnimationFrame(draw)})();
+  rec.ondataavailable=e=>ch.push(e.data);$('#mic').classList.add('rec');
+  rec.onstop=async()=>{cancelAnimationFrame(raf);st.getTracks().forEach(t=>t.stop());actx.close();cv.style.display='none';$('#mic').classList.remove('rec');
+   const fd=new FormData();fd.append('audio',new Blob(ch,{type:'audio/webm'}),'a.webm');
+   try{const r=await(await fetch('/api/transcribe',{method:'POST',body:fd})).json();if(r.text)send(r.text)}catch{toast('Transcription failed')}};
+  rec.start()}catch{toast('Mic unavailable')}};
+async function refresh(){
+ try{const r=await(await fetch('/api/report')).json();last=r;
+  $('#sc').textContent=r.readiness;$('#arc').style.strokeDashoffset=326.7*(1-r.readiness/100);
+  $('#streak').textContent=r.streak+' day'+(r.streak===1?'':'s');
+  if(r.topics.length)$('#bars').innerHTML=r.topics.slice(0,6).map(t=>`<div class="bar ${t.avg>=6?'ok':''}">${t.topic} · ${t.avg}/10<div><i style="width:${t.avg*10}%"></i></div></div>`).join('');
+  if(r.badges.length)$('#badges').textContent=r.badges.join(' · ')}catch{}}
+$('#shareB').onclick=()=>{const c=document.createElement('canvas');c.width=1080;c.height=540;const g=c.getContext('2d');
+ g.fillStyle='#1B1F4B';g.fillRect(0,0,1080,540);g.fillStyle='#5EE3C2';g.font='700 56px system-ui';g.fillText('VivaMate',60,100);
+ g.fillStyle='#fff';g.font='800 200px system-ui';g.fillText((last.readiness||0)+'/100',60,320);
+ g.font='400 40px system-ui';g.fillText('Readiness Score',60,380);const s=last.strengths&&last.strengths[0];g.fillText(s?'Top strength: '+s.topic:'Practising daily',60,460);
+ c.toBlob(b=>{const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='vivamate-result.png';a.click()})};
+$('#setupB').onclick=()=>$('#setup').showModal();
+$('#pf').onsubmit=async e=>{const r=await(await fetch('/api/profile',{method:'POST',body:new FormData(e.target)})).json();toast(`Saved · ${r.repos} repos, ${r.resume_chars} resume chars`)};
+$('#setB').onclick=async()=>{const s=await(await fetch('/api/settings')).json();$('#cl').disabled=!s.cloud_available;document.querySelector(`input[value=${s.mode}]`).checked=true;$('#set').showModal()};
+document.querySelectorAll('input[name=m]').forEach(r=>r.onchange=()=>fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({mode:r.value})}));
+$('#setX').onclick=()=>$('#set').close();
+refresh();
+</script></body></html>
